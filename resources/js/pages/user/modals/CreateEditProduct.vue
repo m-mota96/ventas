@@ -19,48 +19,55 @@ const product       = ref({
     bar_code: '',
     content: '',
     abreviation: '',
+    type_sale: '',
     description: '',
     price: 0,
+    discounted_price: 0,
+    special_price: 0,
     batch: '',
     expiration_date: '',
-    discount: '',
     status: 1
 });
 const errors = ref({
     name: false,
     bar_code: false,
-    price: false
+    price: false,
+    type_sale: false,
 });
 
 const showModal = (_product = null)=> {
     resetErrors();
     title.value  = _product ? 'Editar producto' : 'Registrar producto';
     txtBtn.value = _product ? 'Guardar cambios' : 'Guardar';
-    product.value.id              = null;
-    product.value.newProduct      = true;
-    product.value.name            = '';
-    product.value.bar_code        = '';
-    product.value.content         = '';
-    product.value.abreviation     = '';
-    product.value.description     = '';
-    product.value.price           = 0;
-    product.value.batch           = '';
-    product.value.expiration_date = '';
-    product.value.discount        = '';
-    product.value.status          = 1;
+    product.value.id               = null;
+    product.value.newProduct       = true;
+    product.value.name             = '';
+    product.value.bar_code         = '';
+    product.value.content          = '';
+    product.value.abreviation      = '';
+    product.value.type_sale        = '';
+    product.value.description      = '';
+    product.value.price            = 0;
+    product.value.discounted_price = 0;
+    product.value.special_price    = 0;
+    product.value.batch            = '';
+    product.value.expiration_date  = '';
+    product.value.status           = 1;
     if (_product) {
-        product.value.id              = _product.id;
-        product.value.newProduct      = false;
-        product.value.name            = _product.name;
-        product.value.bar_code        = _product.bar_code;
-        product.value.content         = _product.content;
-        product.value.abreviation     = _product.abreviation;
-        product.value.description     = _product.description;
-        product.value.price           = _product.product_store.price;
-        product.value.batch           = _product.product_store.batch;
-        product.value.expiration_date = _product.product_store.expiration_date;
-        product.value.discount        = _product.product_store.discount;
-        product.value.status          = _product.product_store.status;
+        product.value.id               = _product.id;
+        product.value.newProduct       = false;
+        product.value.name             = _product.name;
+        product.value.bar_code         = _product.bar_code;
+        product.value.content          = _product.content;
+        product.value.abreviation      = _product.abreviation;
+        product.value.type_sale        = _product.type_sale;
+        product.value.description      = _product.description;
+        product.value.price            = _product.product_store.price;
+        product.value.discounted_price = _product.product_store.discounted_price;
+        product.value.special_price    = _product.product_store.special_price;
+        product.value.batch            = _product.product_store.batch;
+        product.value.expiration_date  = _product.product_store.expiration_date;
+        product.value.status           = _product.product_store.status;
     }
     dialogVisible.value = true;
 };
@@ -96,17 +103,22 @@ const validate = ()=> {
         errors.value.price = true;
         valid              = false;
     }
+    if (!product.value.type_sale) {
+        errors.value.type_sale = true;
+        valid                  = false;
+    }
     return valid;
 }
 
 const resetErrors = ()=> {
-    errors.value.name     = false;
-    errors.value.bar_code = false;
-    errors.value.price    = false;
+    errors.value.name      = false;
+    errors.value.bar_code  = false;
+    errors.value.price     = false;
+    errors.value.type_sale = false;
 }
 
 const handleSelect = (_product)=> {
-    console.log(_product);
+    // console.log(_product);
     product.value.id          = _product.id;
     product.value.name        = _product.name;
     product.value.bar_code    = _product.bar_code;
@@ -127,7 +139,7 @@ const querySearch = (queryString, cb) => {
     .filter(createFilter(queryString))
     .map(product => ({
         ...product,
-        value: `${product.name} ${product.content} ${product.abreviation}`
+        value: `${product.name} ${product.content ? product.content : ''} ${product.abreviation ? product.abreviation : ''}`
     }));
 
     cb(results);
@@ -202,6 +214,32 @@ defineExpose({
                 <p class="text-red-400 text-sm" v-if="errors.price">El precio es obligatorio.</p>
             </el-col>
             <el-col :span="12" class="pt-3">
+                <p class="text-black">Precio de mayoreo</p>
+                <el-input-number
+                    v-model="product.discounted_price"
+                    :precision="2"
+                    :step="0.01"
+                    :min="0"
+                    :controls="false"
+                    style="width: 100%;"
+                >
+                    <template #prefix>$</template>
+                </el-input-number>
+            </el-col>
+            <el-col :span="12" class="pt-3">
+                <p class="text-black">Precio especial</p>
+                <el-input-number
+                    v-model="product.special_price"
+                    :precision="2"
+                    :step="0.01"
+                    :min="0"
+                    :controls="false"
+                    style="width: 100%;"
+                >
+                    <template #prefix>$</template>
+                </el-input-number>
+            </el-col>
+            <el-col :span="12" class="pt-3">
                 <p class="text-black">Contenido</p>
                 <!-- <el-input v-model="product.capacity" placeholder="Ej. VDES10" clearable /> -->
                 <el-input
@@ -220,8 +258,15 @@ defineExpose({
                 </el-input>
             </el-col>
             <el-col :span="12" class="pt-3">
-                <p class="text-black">Descuento</p>
-                <el-input v-model="product.discount" clearable />
+                <p class="text-black">¿El producto se vende por pieza o por kilo? <span class="text-red-500">*</span></p>
+                <!-- <el-select v-model="product.type_sale" placeholder="Elige una opción" clearable>
+                    <el-option :key="0" value="pza" label="Por pieza"/>
+                </el-select> -->
+                <el-radio-group v-model="product.type_sale">
+                    <el-radio value="pza">Por pieza</el-radio>
+                    <el-radio value="kg">Por kilo</el-radio>
+                </el-radio-group>
+                <p class="text-red-400 text-sm" v-if="errors.type_sale">Este dato es obligatorio.</p>
             </el-col>
             <el-col :span="24" class="pt-3">
                 <p class="text-black">Descripción del producto</p>

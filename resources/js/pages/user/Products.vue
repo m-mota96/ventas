@@ -70,6 +70,17 @@ const deleteProduct = async (id)=> {
     getProducts();
     showNotification(response.msj);
 };
+
+const parseQuantity = (type_sale, quantity)=> {
+    return type_sale === 'pza' ? parseInt(quantity) : quantity.toFixed(3);
+};
+
+const formatCurrency = (value)=> {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(value);
+};
 </script>
 
 <template>
@@ -92,17 +103,23 @@ const deleteProduct = async (id)=> {
                     <el-table-column prop="description" label="Descripción" />
                     <el-table-column prop="product_store.price" label="Precio">
                         <template #default="scope">
-                            ${{ scope.row.product_store.price }}
+                            {{ formatCurrency(scope.row.product_store.price) }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="Precio mayoreo" align="center">
+                        <template #default="scope">
+                            {{ scope.row.product_store.discounted_price ? formatCurrency(scope.row.product_store.discounted_price) : '0.00' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="product_store.discount" label="Precio especial" align="center">
+                        <template #default="scope">
+                            {{ scope.row.product_store.special_price ? formatCurrency(scope.row.product_store.special_price) : '0.00' }}
                         </template>
                     </el-table-column>
                     <el-table-column label="Cantidad disponible" align="center">
                         <template #default="scope">
-                            {{ (scope.row.inputs - scope.row.outputs).toFixed(3) }}
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="product_store.discount" label="Descuento" align="center">
-                        <template #default="scope">
-                            {{ scope.row.product_store.discount ? scope.row.product_store.discount+'%' : 'N/A' }}
+                            <!-- {{ (scope.row.inputs - scope.row.outputs).toFixed(3) }} -->
+                            {{ parseQuantity(scope.row.type_sale, (scope.row.inputs - scope.row.outputs)) }}
                         </template>
                     </el-table-column>
                     <el-table-column prop="status" label="Estatus" width="90" align="center">

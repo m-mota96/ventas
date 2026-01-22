@@ -10,6 +10,7 @@ Route::prefix('usuario')->name('usuario.')->middleware(['auth', 'verified', 'rol
     Route::get('inicio', [HomeController::class, 'users'])->name('inicio');
     Route::get('productos', [ProductController::class, 'index'])->name('productos');
     Route::get('inventario', [InventoryController::class, 'index'])->name('inventario');
+    Route::get('ventas', [SaleController::class, 'index'])->name('ventas');
 });
 
 Route::prefix('user')->middleware('auth')->group(function () {
@@ -21,5 +22,7 @@ Route::prefix('user')->middleware('auth')->group(function () {
     Route::post('inventory', [InventoryController::class, 'saveInventory']);
     Route::put('inventory', [InventoryController::class, 'editInventory']);
     Route::delete('inventory/{id}', [InventoryController::class, 'deleteInventory']);
+    Route::get('sales', [SaleController::class, 'sales']);
     Route::post('registerSale', [SaleController::class, 'registerSale']);
+    Route::put('sale', [SaleController::class, 'editSale']);
 });

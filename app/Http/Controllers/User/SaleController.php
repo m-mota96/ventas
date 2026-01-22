@@ -10,6 +10,18 @@ use App\Models\Inventory;
 use App\Models\Sale;
 
 class SaleController extends Controller {
+    public function index() {
+        return Inertia::render('user/Sales');
+    }
+
+    public function sales(Request $request) {
+        $sales = Sale::with(['paymentMethod', 'inventories.product', 'status', 'createdBy', 'updatedBy'])
+        ->where('store_id', auth()->user()->store_id)
+        ->orderBy('id', 'DESC')
+        ->get();
+        return ResponseTrait::response(null, $sales);
+    }
+
     public function registerSale(Request $request) {
         try {
             $saleReq  = $request->sale;
@@ -31,6 +43,8 @@ class SaleController extends Controller {
                     'sale_id'      => $sale->id,
                     'type'         => 'output',
                     'quantity'     => $p['quantity'],
+                    'price'        => $p[$p['price_applied']],
+                    'discount'     => $p['price_applied'],
                     'created_by'   => auth()->user()->id,
                     'created_at'   => date('Y-m-d H:i:s'),
                     'updated_at'   => date('Y-m-d H:i:s'),
@@ -38,6 +52,23 @@ class SaleController extends Controller {
             }
             Inventory::insert($insert);
             return ResponseTrait::response('La venta se registró correctamente.');
+        } catch (\Throwable $th) {
+            return ResponseTrait::response(
+                'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.',
+                $th->getMessage(),
+                true,
+                500
+            );
+        }
+    }
+
+    public function editSale(Request $request) {
+        try {
+            $sale             = Sale::where('id', $request->id)->where('store_id', auth()->user()->store_id)->first();
+            $sale->status_id  = $request->status;
+            $sale->updated_by = auth()->user()->id;
+            $sale->save();
+            return ResponseTrait::response('La venta de modificó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response(
                 'Lo sentimos ocurrio un error.<br>Si el problema persiste contacte a soporte.',

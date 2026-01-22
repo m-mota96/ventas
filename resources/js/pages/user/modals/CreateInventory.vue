@@ -108,22 +108,27 @@ const handleSelect = (_product)=> {
 };
 
 const querySearch = (queryString, cb) => {
+    if (queryString.length < 3) {
+        cb([]);
+        return;
+    }
+
     const results = products
     .filter(createFilter(queryString))
     .map(product => ({
-      ...product,
-      value: `${product.name} ${product.content} ${product.abreviation}`
+        ...product,
+        value: `${product.name} ${product.content ? product.content : ''} ${product.abreviation ? product.abreviation : ''}`
     }));
 
-    cb(results)
+    cb(results);
 };
 
 const createFilter = (queryString) => {
+    const search = queryString.toLowerCase();
+
     return (product) => {
-        return (
-            product.name.toLowerCase().indexOf(queryString.toLowerCase()) === 0
-        )
-    }
+        return product.name.toLowerCase().includes(search);
+    };
 };
 
 defineExpose({

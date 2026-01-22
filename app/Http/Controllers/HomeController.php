@@ -25,12 +25,13 @@ class HomeController extends Controller {
     }
 
     public function users() {
-        $products = Product::with(['productStore:product_id,store_id,price,discount,status'])
+        $products = Product::with(['productStore:product_id,store_id,price,discounted_price,special_price,status'])
         ->select(
             'id',
             'name',
             'content',
             'abreviation',
+            'type_sale',
             'description'
         )
         ->addSelect([

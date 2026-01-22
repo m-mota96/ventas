@@ -45,7 +45,7 @@ class ProductController extends Controller {
 
     public function saveProduct(Request $request) {
         try {
-            dd('create', $request->all());
+            // dd('create', $request->all());
             $product = Product::where('bar_code', $request->bar_code)
             // ->whereHas('productStore', function($q) {
             //     $q->where('')
@@ -64,17 +64,19 @@ class ProductController extends Controller {
                 'bar_code'    => $request->bar_code,
                 'content'     => $request->content,
                 'abreviation' => $request->abreviation,
+                'type_sale'   => $request->type_sale,
                 'description' => $request->description,
                 'created_by'  => auth()->user()->id
             ]);
             ProductStore::create([
-                'product_id'      => $product->id,
-                'store_id'        => auth()->user()->store_id,
-                'price'           => $request->price,
-                'batch'           => $request->batch,
-                'expiration_date' => $request->expiration_date,
-                'discount'        => $request->discount,
-                'created_by'  => auth()->user()->id
+                'product_id'       => $product->id,
+                'store_id'         => auth()->user()->store_id,
+                'price'            => $request->price,
+                'batch'            => $request->batch,
+                'expiration_date'  => $request->expiration_date,
+                'discounted_price' => $request->discounted_price,
+                'special_price'    => $request->special_price,
+                'created_by'       => auth()->user()->id
             ]);
             return ResponseTrait::response('El producto se registró correctamente.');
         } catch (\Throwable $th) {
@@ -89,22 +91,37 @@ class ProductController extends Controller {
 
     public function editProduct(Request $request) {
         try {
-            dd('edit', $request->all());
+            // dd('edit', $request->all());
             $product              = Product::find($request->id);
             $product->name        = $request->name;
             $product->bar_code    = $request->bar_code;
             $product->content     = $request->content;
             $product->abreviation = $request->abreviation;
+            $product->type_sale   = $request->type_sale;
             $product->description = $request->description;
             $product->updated_by  = auth()->user()->id;
             $product->save();
             
-            $productStore                  = ProductStore::where('product_id', $product->id)->where('store_id', auth()->user()->store_id)->first();
-            $productStore->price           = $request->price;
-            $productStore->discount        = $request->discount;
-            $productStore->status          = $request->status;
-            $productStore->updated_by      = auth()->user()->id;
-            $productStore->save();
+            $productStore                   = ProductStore::where('product_id', $product->id)->where('store_id', auth()->user()->store_id)->first();
+            if ($productStore) {
+                $productStore->price            = $request->price;
+                $productStore->discounted_price = $request->discounted_price;
+                $productStore->special_price    = $request->special_price;
+                $productStore->status           = $request->status;
+                $productStore->updated_by       = auth()->user()->id;
+                $productStore->save();
+            } else {
+                ProductStore::create([
+                    'product_id'       => $product->id,
+                    'store_id'         => auth()->user()->store_id,
+                    'price'            => $request->price,
+                    'batch'            => $request->batch,
+                    'expiration_date'  => $request->expiration_date,
+                    'discounted_price' => $request->discounted_price,
+                    'special_price'    => $request->special_price,
+                    'created_by'       => auth()->user()->id
+                ]);
+            }
             return ResponseTrait::response('El producto se modificó correctamente.');
         } catch (\Throwable $th) {
             return ResponseTrait::response(

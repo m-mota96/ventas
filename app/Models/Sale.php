@@ -11,10 +11,10 @@ class Sale extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'store_id', 'status_id', 'payment_method_id', 'cash', 'card', 'total', 'created_by', 'updated_by', 'deleted_by',
+        'store_id', 'status_id', 'payment_method_id', 'cash', 'card', 'total', 'observations', 'created_by', 'updated_by', 'deleted_by',
     ];
 
-    public function inventory() {
+    public function inventories() {
         return $this->hasMany(Inventory::class);
     }
 

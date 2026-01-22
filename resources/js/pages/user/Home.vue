@@ -51,32 +51,35 @@ const products     = ref([]);
 const disablePayTo = ref(false);
 
 onMounted(() => {
-    paymentMethods.forEach(pm => {
-        if (pm.default) {
-            sale.value.paymentMethod = pm.id;
-        }
-    });
-    if (sale.value.paymentMethod === 2) {
-        disablePayTo.value = true;
-    }
+    checkPaymentMethod();
 });
 
 const registerSale = async ()=> {
+    if (!products.value.length) {
+        showNotification('No hay productos agregados a la venta.', 'warning');
+        return
+    }
     const response = await apiClient('user/registerSale', 'POST', {sale: sale.value, products: products.value});
     if (response.error) {
         showNotification(response.msj, 'error');
         return
     }
+    clearForm();
     showNotification(response.msj);
 }
 
 const calculateTotal = ()=> {
     let total = 0;
     products.value.forEach(p => {
-        total = total + (p.quantity * p.price);
+        let price = p[p.price_applied];
+        total = total + (p.quantity * price);
     });
     sale.value.subtotal = total;
     sale.value.total    = total;
+};
+
+const calculateAmount = (index, price_applied, quantity)=> {
+    return products.value[index][price_applied] * quantity
 };
 
 const handleSelect = (_product)=> {
@@ -86,9 +89,12 @@ const handleSelect = (_product)=> {
         name: _product.name,
         content: _product.content,
         abreviation: _product.abreviation,
+        type_sale: _product.type_sale,
         description: _product.description,
         price: _product.product_store.price,
-        discount: _product.product_store.discount
+        discounted_price: _product.product_store.discounted_price,
+        special_price: _product.product_store.special_price,
+        price_applied: 'price'
     });
     calculateTotal();
     search.value.bar_code = '';
@@ -121,9 +127,31 @@ const payToDisabled = (_value)=> {
     }
 };
 
+const clearForm = ()=> {
+    products.value           = [];
+    sale.value.paymentMethod = 0;
+    sale.value.subtotal      = 0;
+    sale.value.discount      = 0;
+    sale.value.total         = 0;
+    sale.value.payTo         = '';
+    sale.value.change        = 0;
+    sale.value.cash          = '';
+    sale.value.card          = '';
+    checkPaymentMethod();
+};
+
 const removeProduct = (id) => {
     products.value = products.value.filter(p => p.id !== id);
     calculateTotal();
+};
+
+const checkPaymentMethod = ()=> {
+    paymentMethods.forEach(pm => {
+        if (pm.default) {
+            sale.value.paymentMethod = pm.id;
+        }
+    });
+    payToDisabled(sale.value.paymentMethod);
 };
 
 const formatCurrency = (value)=> {
@@ -134,23 +162,28 @@ const formatCurrency = (value)=> {
 };
 
 const querySearch = (queryString, cb) => {
+    if (queryString.length < 3) {
+        cb([]);
+        return;
+    }
+
     const results = listProducts
     .filter(createFilter(queryString))
     .filter(product => !products.value.some(p => p.id === product.id))
     .map(product => ({
-      ...product,
-      value: `${product.name} ${product.content} ${product.abreviation}`
+        ...product,
+        value: `${product.name} ${product.content ? product.content : ''} ${product.abreviation ? product.abreviation : ''}`
     }));
 
-    cb(results)
+    cb(results);
 };
 
 const createFilter = (queryString) => {
+    const search = queryString.toLowerCase();
+
     return (product) => {
-        return (
-            product.name.toLowerCase().indexOf(queryString.toLowerCase()) === 0
-        )
-    }
+        return product.name.toLowerCase().includes(search);
+    };
 };
 </script>
 
@@ -166,7 +199,7 @@ const createFilter = (queryString) => {
                     <el-col :span="8">
                         <el-form-item>
                             <template #label>
-                                <span class="text-black">Código de barras</span>
+                                <span class="text-black">Código de barras/Clave</span>
                             </template>
                             <el-input v-model="search.bar_code" clearable placeholder="Escanea el código para agregar productos" />
                         </el-form-item>
@@ -187,12 +220,12 @@ const createFilter = (queryString) => {
                         </el-form-item>
                     </el-col>
                     <el-col :span="8">
-                        <el-form-item>
+                        <!-- <el-form-item>
                             <template #label>
                                 <span class="text-black">Sku</span>
                             </template>
                             <el-input v-model="search.sku" clearable placeholder="Escribe la clave para buscar" />
-                        </el-form-item>
+                        </el-form-item> -->
                     </el-col>
                     <el-col :span="24" class="mt-5">
                         <el-table
@@ -203,30 +236,57 @@ const createFilter = (queryString) => {
                             row-class-name="text-black text-base"
                             style="border: 1px solid grey; height: 53vh !important; border-radius: 5px; width: 100%;"
                         >
-                            <el-table-column>
-                                <template #header>
-                                    
-                                </template>
+                            <el-table-column label="" width="100" align="center">
                                 <template #default="scope">
                                     <el-tooltip content="Quitar producto" placement="left">
                                         <el-button type="danger" size="small" @click="removeProduct(scope.row.id)"><Trash2 :size="15" /></el-button>
                                     </el-tooltip>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Producto" min-width="350">
+                            <el-table-column label="Producto">
                                 <template #default="scope">
-                                    {{ scope.row.name }} {{ scope.row.content }} {{ scope.row.abreviation }}
+                                    {{ scope.row.name }} {{ scope.row.content ? scope.row.content : '' }} {{ scope.row.abreviation ? scope.row.abreviation : '' }}
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="description" label="Descripción" min-width="350" />
-                            <el-table-column label="Precio" align="center" min-width="150">
+                            <el-table-column prop="description" label="Descripción" />
+                            <el-table-column label="Descuento" align="center">
                                 <template #default="scope">
-                                    {{ formatCurrency(scope.row.price) }}
+                                    <el-select
+                                        v-model="scope.row.price_applied"
+                                        placeholder="Elige un precio"
+                                        @change="calculateTotal"
+                                        v-if="scope.row.discounted_price > 0 || scope.row.special_price > 0"
+                                    >
+                                        <el-option
+                                            :key="0"
+                                            value="price"
+                                            :label="`Ninguno (${formatCurrency(scope.row.price)})`"
+                                        />
+                                        <el-option
+                                            :key="1"
+                                            v-if="scope.row.discounted_price > 0"
+                                            value="discounted_price"
+                                            :label="`Mayoreo (${formatCurrency(scope.row.discounted_price)})`"
+                                        />
+                                        <el-option
+                                            :key="2"
+                                            v-if="scope.row.special_price > 0"
+                                            value="special_price"
+                                            :label="`Especial (${formatCurrency(scope.row.special_price)})`"
+                                        />
+                                    </el-select>
+                                    <span v-if="scope.row.discounted_price == 0 && scope.row.special_price == 0">Ninguno (${{ scope.row.price }})</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="quantity" label="Cantidad" align="center" min-width="150">
+                            <el-table-column label="Precio" align="center">
+                                <template #default="scope">
+                                    {{ formatCurrency(scope.row[scope.row.price_applied]) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="quantity" label="Cantidad" align="center">
                                 <template #default="scope">
                                     <el-input-number
+                                        v-if="scope.row.type_sale === 'pza'"
                                         v-model="products[scope.$index].quantity"
                                         size="small"
                                         :precision="0"
@@ -234,11 +294,20 @@ const createFilter = (queryString) => {
                                         :min="1"
                                         @change="calculateTotal"
                                     />
+                                    <el-input-number
+                                        v-if="scope.row.type_sale === 'kg'"
+                                        v-model="products[scope.$index].quantity"
+                                        size="small"
+                                        :precision="3"
+                                        :step="0.001"
+                                        :min="0.5"
+                                        @change="calculateTotal"
+                                    />
                                 </template>
                             </el-table-column>
-                            <el-table-column label="Importe" align="center" min-width="150">
+                            <el-table-column label="Importe" align="center">
                                 <template #default="scope">
-                                    {{ formatCurrency(scope.row.price * scope.row.quantity) }}
+                                    {{ formatCurrency(calculateAmount(scope.$index, scope.row.price_applied, scope.row.quantity)) }}
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -250,10 +319,10 @@ const createFilter = (queryString) => {
                                     <span class="text-balck">Subtotal: </span>
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.subtotal) }}</span>
                                 </p>
-                                <p class="text-2xl mb-1 relative">
+                                <!-- <p class="text-2xl mb-1 relative">
                                     <span class="text-balck">Descuento: </span>
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.discount) }}</span>
-                                </p>
+                                </p> -->
                                 <p class="text-2xl mb-1 relative">
                                     <span class="text-balck bold">Total: </span>
                                     <span class="text-blue-600 bold absolute" style="right: 0;">{{ formatCurrency(sale.total) }}</span>
@@ -290,7 +359,22 @@ const createFilter = (queryString) => {
                                 </div>
                             </el-col>
                             <el-col :span="10" class="text-right">
-                                <el-button type="danger" plain class="w-25"><X :size="20" /> Cancelar venta</el-button>
+                                <el-popconfirm
+                                    class="box-item"
+                                    confirm-button-text="Si"
+                                    cancel-button-text="No"
+                                    :hide-icon="true"
+                                    confirm-button-type="primary"
+                                    cancel-button-type="default"
+                                    title="¿Seguro que deseas cancelar la venta?"
+                                    placement="top"
+                                    width="200"
+                                    @confirm="clearForm"
+                                >
+                                    <template #reference>
+                                        <el-button type="danger" plain class="w-25"><X :size="20" /> Cancelar venta</el-button>
+                                    </template>
+                                </el-popconfirm>
                                 <el-button type="success" plain class="w-25" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                             </el-col>
                         </el-row>
