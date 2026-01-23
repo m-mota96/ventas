@@ -340,7 +340,7 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.change) }}</span>
                                 </p>
                             </el-col>
-                            <el-col :span="5">
+                            <el-col :span="3">
                                 <p class="text-black text-lg">Método de pago</p>
                                 <el-radio-group v-model="sale.paymentMethod" @change="payToDisabled">
                                     <div class="w-100" v-for="pm in paymentMethods" :key="pm.id">
@@ -358,7 +358,10 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-500 bold text-lg">{{ formatCurrency(sale.card) }}</span>
                                 </div>
                             </el-col>
-                            <el-col :span="10" class="text-right">
+                            <el-col :span="6">
+
+                            </el-col>
+                            <el-col :span="6" class="text-right">
                                 <el-popconfirm
                                     class="box-item"
                                     confirm-button-text="Si"
@@ -372,10 +375,10 @@ const createFilter = (queryString) => {
                                     @confirm="clearForm"
                                 >
                                     <template #reference>
-                                        <el-button type="danger" plain class="w-25"><X :size="20" /> Cancelar venta</el-button>
+                                        <el-button type="danger" plain class="w-40"><X :size="20" /> Cancelar venta</el-button>
                                     </template>
                                 </el-popconfirm>
-                                <el-button type="success" plain class="w-25" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
+                                <el-button type="success" plain class="w-40" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                             </el-col>
                         </el-row>
                     </el-col>

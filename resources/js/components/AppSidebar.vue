@@ -14,11 +14,11 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Users, LayoutGrid, Store, ClipboardList, DollarSign, PackageOpen } from 'lucide-vue-next';
+import { Users, LayoutGrid, Store, ClipboardList, DollarSign, PackageOpen, ChartSpline } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
-const page = usePage();
+const page     = usePage();
 const userRole = computed(() => page.props.auth.user.roles[0].name);
 
 const mainNavItems: NavItem[] = [
@@ -27,6 +27,36 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
         roles: ['admin']
+    },
+    {
+        title: 'Inicio',
+        href: dashboard(),
+        icon: LayoutGrid,
+        roles: ['user']
+    },
+    {
+        title: 'Estadísticas',
+        href: '../usuario/estadisticas',
+        icon: ChartSpline,
+        roles: ['user']
+    },
+    {
+        title: 'Inventario',
+        href: '../usuario/inventario',
+        icon: PackageOpen,
+        roles: ['user']
+    },
+    {
+        title: 'Productos',
+        href: '../usuario/productos',
+        icon: ClipboardList,
+        roles: ['user']
+    },
+    {
+        title: 'Ventas',
+        href: '../usuario/ventas',
+        icon: DollarSign,
+        roles: ['user']
     },
     {
         title: 'Sucursales',
@@ -39,30 +69,6 @@ const mainNavItems: NavItem[] = [
         href: '../administrador/usuarios',
         icon: Users,
         roles: ['admin']
-    },
-    {
-        title: 'Inicio',
-        href: dashboard(),
-        icon: LayoutGrid,
-        roles: ['user']
-    },
-    {
-        title: 'Productos',
-        href: '../usuario/productos',
-        icon: ClipboardList,
-        roles: ['user']
-    },
-    {
-        title: 'Inventario',
-        href: '../usuario/inventario',
-        icon: PackageOpen,
-        roles: ['user']
-    },
-    {
-        title: 'Ventas',
-        href: '../usuario/ventas',
-        icon: DollarSign,
-        roles: ['user']
     },
 ];
 

@@ -23,15 +23,23 @@ const { allProducts } = defineProps({
 });
 
 const createEditProductRef = ref(null);
-const products = ref([]);
+const products   = ref([]);
+const pagination = ref({
+    currentPage: 1,
+    pageSize: 20,
+    total: 0
+});
 
 onMounted(() => {
     getProducts();
 });
 
 const getProducts = async ()=> {
-    const response = await apiClient('user/products');
-    products.value = response.data;
+    const response = await apiClient('user/products', 'GET', {
+        pagination: pagination.value,
+    });
+    pagination.value.total = response.data.totalRows;
+    products.value         = response.data.products;
 };
 
 const openModal = (product = null)=> {
@@ -72,7 +80,7 @@ const deleteProduct = async (id)=> {
 };
 
 const parseQuantity = (type_sale, quantity)=> {
-    return type_sale === 'pza' ? parseInt(quantity) : quantity.toFixed(3);
+    return type_sale === 'pza' ? parseInt(quantity) : quantity;
 };
 
 const formatCurrency = (value)=> {
@@ -81,6 +89,13 @@ const formatCurrency = (value)=> {
         currency: 'MXN'
     }).format(value);
 };
+
+const handleSizeChange = (val) => {
+    getProducts();
+}
+const handleCurrentChange = (val) => {
+    getProducts();
+}
 </script>
 
 <template>
@@ -177,8 +192,24 @@ const formatCurrency = (value)=> {
                         </template>
                     </el-table-column>
                 </el-table>
+                <el-pagination
+                    class="mt-3 custom-pager"
+                    v-model:current-page="pagination.currentPage"
+                    v-model:page-size="pagination.pageSize"
+                    :page-sizes="[20, 40, 60, 80, 100]"
+                    layout="total, sizes, prev, pager, next"
+                    :total="pagination.total"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                />
             </el-card>
             <CreateEditProduct ref="createEditProductRef" :get-parent-products="getProducts" :all-products="allProducts"/>
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.custom-pager :deep(.el-select) {
+    width: 150px !important;
+}
+</style>

@@ -5,10 +5,11 @@ import { Head } from '@inertiajs/vue3';
 import apiClient from '@/apiClient';
 import { ref, onMounted } from 'vue';
 import { ReceiptText, ListCollapse, X, Trash2 } from 'lucide-vue-next';
-// import CreateEditProduct from './modals/CreateEditProduct.vue';
+import DetailSale from './modals/DetailSale.vue';
 import showNotification from '@/notification';
 import { dateEs } from '@/dateEs';
 import { time12H } from '@/time12H';
+import Swal from 'sweetalert2';
 
 const breadcrumbs = [
     {
@@ -17,51 +18,63 @@ const breadcrumbs = [
     },
 ];
 
-// const { allProducts } = defineProps({
-//     allProducts: {
-//         type: Array,
-//         required: true
-//     },
-// });
-
-const createEditProductRef = ref(null);
-const sales = ref([]);
+const detailSaleRef = ref(null);
+const sales         = ref([]);
+const pagination    = ref({
+    currentPage: 1,
+    pageSize: 20,
+    total: 0
+});
 
 onMounted(() => {
     getSales();
 });
 
 const getSales = async ()=> {
-    const response = await apiClient('user/sales');
-    sales.value    = response.data;
+    const response = await apiClient('user/sales', 'GET', {
+        pagination: pagination.value,
+    });
+    pagination.value.total = response.data.totalRows;
+    sales.value            = response.data.sales;
 };
 
-const openModal = (product = null)=> {
-    // createEditProductRef.value?.showModal(product);
+const openModal = (inventories = null)=> {
+    detailSaleRef.value?.showModal(inventories);
 };
 
 const statusSale = async (id, status)=> {
-    const response = await apiClient('user/sale', 'PUT', {id, status});
-    if (response.error) {
-        showNotification(response.msj, 'error');
-        return
-    }
-    getSales();
-    showNotification(`La venta se canceló correctamente.`);
-};
-
-const deleteProduct = async (id)=> {
-    // const response = await apiClient(`user/product/${id}`, 'DELETE');
-    // if (response.error) {
-    //     showNotification(response.msj, 'error');
-    //     return
-    // }
-    // getSales();
-    // showNotification(response.msj);
-};
-
-const parseQuantity = (type_sale, quantity)=> {
-    return type_sale === 'pza' ? parseInt(quantity) : quantity.toFixed(3);
+    Swal.fire({
+        title: 'Cancelar',
+        text: 'Por favor, indica el motivo de la cancelación',
+        input: 'textarea',
+        inputPlaceholder: 'Escribe el motivo aquí...',
+        inputAttributes: {
+            'aria-label': 'Motivo de cancelación'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Cerrar',
+        confirmButtonColor: "#3085d6",
+        reverseButtons: true,
+        preConfirm: (motivo) => {
+            if (!motivo || motivo.trim() === '') {
+            Swal.showValidationMessage(
+                'Debes ingresar un motivo de cancelación'
+            )
+            }
+            return motivo
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const response = await apiClient('user/sale', 'PUT', {id, status, observations: result.value});
+            if (response.error) {
+                showNotification(response.msj, 'error');
+                return
+            }
+            getSales();
+            showNotification(`La venta se canceló correctamente.`);
+        }
+    });
 };
 
 const formatCurrency = (value)=> {
@@ -79,6 +92,13 @@ const colorStatus = (status) => {
             return 'text-green-500';
     }
 };
+
+const handleSizeChange = (val) => {
+    getSales();
+}
+const handleCurrentChange = (val) => {
+    getSales();
+}
 </script>
 
 <template>
@@ -118,15 +138,15 @@ const colorStatus = (status) => {
                             {{ dateEs(scope.row.created_at, '/', 1) }}<br>{{ time12H(scope.row.created_at) }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="Fecha y hora de cancelación" align="center">
-                        <template #default="scope">
-                            <span v-if="scope.row.status_id === 2">{{ dateEs(scope.row.updated_at, '/', 1) }}<br>{{ time12H(scope.row.updated_at) }}</span>
-                        </template>
-                    </el-table-column>
                     <el-table-column prop="observations" label="Motivo de cancelación"/>
                     <el-table-column prop="updated_by.name">
                         <template #header>
                             Usuario<br>que<br>canceló
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="Fecha y hora de cancelación" align="center">
+                        <template #default="scope">
+                            <span v-if="scope.row.status_id === 2">{{ dateEs(scope.row.updated_at, '/', 1) }}<br>{{ time12H(scope.row.updated_at) }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="Estatus" align="center">
@@ -135,29 +155,13 @@ const colorStatus = (status) => {
                         </template>
                     </el-table-column>
                     <el-table-column label="Acciones" width="180" align="center">
-                        <!-- <template #header>
-                            <el-tooltip content="Nuevo producto" placement="top">
-                                <el-button type="primary" class="!p-1" @click="openModal()">
-                                    <Plus size="20" />
-                                </el-button>
-                            </el-tooltip>
-                        </template> -->
                         <template #default="scope">
                             <el-button-group>
                                 <el-tooltip content="Detalles de venta" placement="top">
-                                    <el-button type="primary" class="!p-1">
+                                    <el-button type="primary" class="!p-1" @click="openModal(scope.row.inventories)">
                                         <ListCollapse :size="20" />
                                     </el-button>
                                 </el-tooltip>
-                                <!-- <el-tooltip :content="scope.row.product_store.status ? 'Desactivar producto' : 'Activar producto'" placement="top">
-                                    <el-button
-                                        :type="scope.row.product_store.status ? 'warning' : 'success'"
-                                        class="!p-1"
-                                        @click="statusProduct(scope.row)"
-                                    >
-                                        <Eye size="20" />
-                                    </el-button>
-                                </el-tooltip> -->
                                 <el-popconfirm
                                     v-if="scope.row.status_id === 1"
                                     class="box-item"
@@ -174,7 +178,7 @@ const colorStatus = (status) => {
                                     <template #reference>
                                         <span>
                                             <el-tooltip content="Cancelar venta" placement="top">
-                                                <el-button type="warning" class="!p-1" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">
+                                                <el-button type="danger" class="!p-1" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">
                                                     <X size="20" />
                                                 </el-button>
                                             </el-tooltip>
@@ -185,8 +189,24 @@ const colorStatus = (status) => {
                         </template>
                     </el-table-column>
                 </el-table>
+                <el-pagination
+                    class="mt-3 custom-pager"
+                    v-model:current-page="pagination.currentPage"
+                    v-model:page-size="pagination.pageSize"
+                    :page-sizes="[20, 40, 60, 80, 100]"
+                    layout="total, sizes, prev, pager, next"
+                    :total="pagination.total"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                />
             </el-card>
-            <!-- <CreateEditProduct ref="createEditProductRef" :get-parent-products="getSales" :all-products="allProducts"/> -->
+            <DetailSale ref="detailSaleRef"/>
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.custom-pager :deep(.el-select) {
+    width: 150px !important;
+}
+</style>

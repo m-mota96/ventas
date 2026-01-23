@@ -15,11 +15,17 @@ class SaleController extends Controller {
     }
 
     public function sales(Request $request) {
-        $sales = Sale::with(['paymentMethod', 'inventories.product', 'status', 'createdBy', 'updatedBy'])
-        ->where('store_id', auth()->user()->store_id)
-        ->orderBy('id', 'DESC')
-        ->get();
-        return ResponseTrait::response(null, $sales);
+        $pagination = $request->pagination;
+        $page       = $pagination['currentPage']; // Página actual
+        $limit      = $pagination['pageSize']; // Tamaño de la página
+        $offset     = ($page - 1) * $limit; // Calcular el offset
+
+        $data = Sale::with(['paymentMethod', 'inventories.product', 'status', 'createdBy', 'updatedBy'])
+        ->where('store_id', auth()->user()->store_id);
+
+        $sales     = $data->offset($offset)->limit($limit)->orderBy('id', 'DESC')->get();
+        $totalRows = $data->count();
+        return ResponseTrait::response(null, ['sales' => $sales, 'totalRows' => $totalRows]);
     }
 
     public function registerSale(Request $request) {
@@ -64,9 +70,10 @@ class SaleController extends Controller {
 
     public function editSale(Request $request) {
         try {
-            $sale             = Sale::where('id', $request->id)->where('store_id', auth()->user()->store_id)->first();
-            $sale->status_id  = $request->status;
-            $sale->updated_by = auth()->user()->id;
+            $sale               = Sale::where('id', $request->id)->where('store_id', auth()->user()->store_id)->first();
+            $sale->status_id    = $request->status;
+            $sale->observations = $request->observations;
+            $sale->updated_by   = auth()->user()->id;
             $sale->save();
             return ResponseTrait::response('La venta de modificó correctamente.');
         } catch (\Throwable $th) {

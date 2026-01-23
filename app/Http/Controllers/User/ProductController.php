@@ -23,7 +23,12 @@ class ProductController extends Controller {
     }
 
     public function products(Request $request) {
-        $products = Product::with(['productStore'])
+        $pagination = $request->pagination;
+        $page       = $pagination['currentPage']; // Página actual
+        $limit      = $pagination['pageSize']; // Tamaño de la página
+        $offset     = ($page - 1) * $limit; // Calcular el offset
+
+        $data = Product::with(['productStore'])
         ->addSelect(['inputs' => Inventory::selectRaw('IF(SUM(quantity) IS NULL, 0, SUM(quantity)) as quantity')
             ->whereColumn('product_id', 'products.id')
             ->where('type', 'input')
@@ -32,15 +37,27 @@ class ProductController extends Controller {
         ->addSelect(['outputs' => Inventory::selectRaw('IF(SUM(quantity) IS NULL, 0, SUM(quantity)) as quantity')
             ->whereColumn('product_id', 'products.id')
             ->where('type', 'output')
+            ->where(function ($query) {
+                $query->where('reference_id', '!=', 2)
+                ->orWhere(function ($q) {
+                    $q->where('reference_id', 2)
+                    ->whereHas('sale', function ($sale) {
+                        $sale->where('status_id', 1); // Activa
+                    });
+                });
+            })
             ->groupBy('product_id')
         ])
         ->whereHas('productStore', function($q) {
             $q->where('store_id', auth()->user()->store_id);
-        })
-        ->orderBy('name')
-        ->get();
+        });
+        // ->offset($offset)->limit($limit)
+        // ->orderBy('name')
+        // ->get();
 
-        return ResponseTRait::response(null, $products);
+        $products  = $data->offset($offset)->limit($limit)->orderBy('name')->get();
+        $totalRows = $data->count();
+        return ResponseTrait::response(null, ['products' => $products, 'totalRows' => $totalRows]);
     }
 
     public function saveProduct(Request $request) {

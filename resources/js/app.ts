@@ -8,6 +8,8 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
 import ElementPlus from 'element-plus';
+import es from 'element-plus/es/locale/lang/es';
+es.el.pagination.pagesize = ' por página';
 // import es from 'element-plus/dist/locale/es.mjs';
 import '../css/styles.css';
 
@@ -21,10 +23,21 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ElementPlus)
-            .mount(el);
+        window.addEventListener('popstate', () => {
+            document.body.style.display = 'none';
+            window.location.href = '/login';
+        });
+
+        const appInstance = createApp({ render: () => h(App, props) });
+
+        appInstance
+        .use(plugin)
+        .use(ElementPlus, { locale: es })
+        .mount(el);
+        // createApp({ render: () => h(App, props) })
+        //     .use(plugin)
+        //     .use(ElementPlus)
+        //     .mount(el);
     },
     progress: {
         color: '#4B5563',

@@ -1,9 +1,9 @@
 <script setup lang="js">
 import apiClient from '@/apiClient';
 import showNotification from '@/notification';
-import { ref, defineExpose } from 'vue';
+import { ref, defineExpose, computed } from 'vue';
 
-const { getParentInventory, products } = defineProps({
+const { getParentInventory, products, references } = defineProps({
     getParentInventory: Function,
     products: Array,
     references: Array,
@@ -16,10 +16,12 @@ const loading       = ref(false);
 const inventory     = ref({
     id: null,
     product_id: null,
+    type_sale: '',
     name: '',
     bar_code: '',
     type: '',
     reference: '',
+    price: 0,
     batch: '',
     expiration_date: '',
     quantity: 1,
@@ -40,11 +42,13 @@ const showModal = (_inventory = null)=> {
     txtBtn.value = _inventory ? 'Guardar cambios' : 'Guardar';
     inventory.value.id              = null;
     inventory.value.product_id      = null;
+    inventory.value.type_sale       = ''
     inventory.value.name            = '';
     inventory.value.bar_code        = '';
     inventory.value.type            = '';
     inventory.value.reference       = '';
     inventory.value.batch           = '';
+    inventory.value.price           = 0;
     inventory.value.expiration_date = '';
     inventory.value.quantity        = 1;
     inventory.value.description     = '';
@@ -105,6 +109,7 @@ const resetErrors = ()=> {
 const handleSelect = (_product)=> {
     inventory.value.product_id = _product.id;
     inventory.value.bar_code   = _product.bar_code;
+    inventory.value.type_sale  = _product.type_sale;
 };
 
 const querySearch = (queryString, cb) => {
@@ -130,6 +135,10 @@ const createFilter = (queryString) => {
         return product.name.toLowerCase().includes(search);
     };
 };
+
+const filterReferences = computed(() => {
+    return references.filter(item => item.id !== 2);
+});
 
 defineExpose({
     showModal
@@ -200,7 +209,7 @@ defineExpose({
                 >
                     <el-select v-model="inventory.reference" placeholder="Selecciona una opción">
                         <el-option
-                            v-for="r in references"
+                            v-for="r in filterReferences"
                             :key="r.id"
                             :label="r.name"
                             :value="r.id"
@@ -232,6 +241,7 @@ defineExpose({
                     class="!mb-0"
                 >
                     <el-input-number
+                        v-if="inventory.type_sale === 'kg'"
                         class="w-100"
                         v-model="inventory.quantity"
                         :precision="3"
@@ -239,8 +249,29 @@ defineExpose({
                         :min="0.001"
                         :controls="false"
                     />
+                    <el-input-number
+                        v-if="inventory.type_sale === 'pza' || !inventory.type_sale"
+                        class="w-100"
+                        v-model="inventory.quantity"
+                        :precision="0"
+                        :step="1"
+                        :min="1"
+                        :controls="false"
+                    />
                 </el-form-item>
                 <p class="text-red-400 text-sm" v-if="errors.quantity">La cantidad es obligatoria.</p>
+            </el-col>
+            <el-col :span="12" class="pt-3" v-if="inventory.type === 'input' && inventory.reference === 1">
+                <p class="text-black">¿Cuál fue el monto pagado por el producto?</p>
+                <el-input-number
+                    class="w-100"
+                    v-model="inventory.price"
+                    :precision="2"
+                    :step="0.01"
+                    :min="0"
+                    :controls="false"
+                    clearable
+                />
             </el-col>
             <el-col :span="24" class="pt-3">
                 <p class="text-black">Describe el movimiento</p>
