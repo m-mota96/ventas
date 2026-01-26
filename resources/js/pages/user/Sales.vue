@@ -1,19 +1,21 @@
 <script setup lang="js">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import apiClient from '@/apiClient';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { ReceiptText, ListCollapse, X, Trash2 } from 'lucide-vue-next';
 import DetailSale from './modals/DetailSale.vue';
 import showNotification from '@/notification';
 import { dateEs } from '@/dateEs';
 import { time12H } from '@/time12H';
 import Swal from 'sweetalert2';
+const page = usePage();
+const user = computed(() => page.props.auth.user);
 
 const breadcrumbs = [
     {
-        title: 'Ventas',
+        title: `Ventas - Sucursal ${user.value.store.name}`,
         href: dashboard().url,
     },
 ];

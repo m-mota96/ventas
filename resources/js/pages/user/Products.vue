@@ -1,16 +1,18 @@
 <script setup lang="js">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import apiClient from '@/apiClient';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Plus, Pen, Eye, Trash2 } from 'lucide-vue-next';
 import CreateEditProduct from './modals/CreateEditProduct.vue';
 import showNotification from '@/notification';
+const page = usePage();
+const user = computed(() => page.props.auth.user);
 
 const breadcrumbs = [
     {
-        title: 'Productos',
+        title: `Productos - Sucursal ${user.value.store.name}`,
         href: dashboard().url,
     },
 ];

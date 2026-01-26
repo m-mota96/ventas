@@ -1,18 +1,20 @@
 <script setup lang="js">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import apiClient from '@/apiClient';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { Plus, Pen, Trash2, FilterX  } from 'lucide-vue-next';
 import CreateInventory from './modals/CreateInventory.vue';
 import showNotification from '@/notification';
 import { dateEs } from '@/dateEs';
 import { rangeMonth } from '@/rangeMonth';
+const page = usePage();
+const user = computed(() => page.props.auth.user);
 
 const breadcrumbs = [
     {
-        title: 'Inventario',
+        title: `Inventario - Sucursal ${user.value.store.name}`,
         href: dashboard().url,
     },
 ];
@@ -28,9 +30,10 @@ const { products, references } = defineProps({
     }
 });
 
-const range       = rangeMonth();
-const inventories = ref([]);
-const pagination  = ref({
+const createInventoryRef = ref(null);
+const range              = rangeMonth();
+const inventories        = ref([]);
+const pagination         = ref({
     currentPage: 1,
     pageSize: 20,
     total: 0
@@ -60,7 +63,6 @@ const types = ref([
 
 onMounted(() => {
     clearFilters();
-    getInventory();
 });
 
 const getInventory = async ()=> {
@@ -97,6 +99,7 @@ const clearFilters = ()=> {
     search.value.reference    = [1, 3];
     search.value.date         = [range.first, range.last];
     search.value.created_by   = '';
+    getInventory();
 };
 
 const parseQuantity = (type_sale, quantity)=> {
@@ -108,6 +111,13 @@ const handleSizeChange = (val) => {
 };
 const handleCurrentChange = (val) => {
     getInventory();
+};
+
+const formatCurrency = (value)=> {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(value);
 };
 
 const handleCheckAll = (val) => {
@@ -193,15 +203,15 @@ watch(
                             </el-button>
                         </el-tooltip>
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label for="searchProduct" class="text-sm text-black">Producto</label>
                         <el-input v-model="search.product_name" class="w-100" id="searchProduct" @input="getInventory" clearable />
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label for="searchQuantity" class="text-sm text-black">Cantidad</label>
                         <el-input v-model="search.quantity" class="w-100" id="searchQuantity" @input="getInventory" clearable />
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label for="searchType" class="text-sm text-black">Tipo de movimiento</label>
                         <el-select
                             v-model="search.type"
@@ -231,7 +241,7 @@ watch(
                             />
                         </el-select>
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label for="searchReference" class="text-sm text-black">Referencia</label>
                          <el-select
                             v-model="search.reference"
@@ -260,7 +270,7 @@ watch(
                             />
                         </el-select>
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label class="text-sm text-black">Rango de fecha</label>
                         <el-date-picker
                             v-model="search.date"
@@ -275,7 +285,7 @@ watch(
                             @change="getInventory"
                         />
                     </el-col>
-                    <el-col :span="4">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="4" class="mb-3">
                         <label for="searchUser" class="text-sm text-black">Usuario que registró</label>
                         <el-input v-model="search.created_by" class="w-100" id="searchUser" @input="getInventory" clearable />
                     </el-col>
@@ -304,6 +314,11 @@ watch(
                         </template>
                     </el-table-column> -->
                     <el-table-column prop="reference.name" label="Referencia" />
+                    <el-table-column label="Costo">
+                        <template #default="scope">
+                            {{ formatCurrency(scope.row.price) }}
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="description" label="Descripción" />
                     <el-table-column prop="batch" label="Lote" />
                     <el-table-column label="Fecha de caducidad">

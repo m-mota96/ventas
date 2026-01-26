@@ -196,7 +196,7 @@ const createFilter = (queryString) => {
         >
             <el-card class="my-card">
                 <el-row :gutter="20">
-                    <el-col :span="8">
+                    <el-col :xs="0" :sm="0" :md="0" :lg="8" :xl="8">
                         <el-form-item>
                             <template #label>
                                 <span class="text-black">Código de barras/Clave</span>
@@ -204,7 +204,7 @@ const createFilter = (queryString) => {
                             <el-input v-model="search.bar_code" clearable placeholder="Escanea el código para agregar productos" />
                         </el-form-item>
                     </el-col>
-                    <el-col :span="8">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
                         <el-form-item>
                             <template #label>
                                 <span class="text-black">Producto</span>
@@ -219,7 +219,7 @@ const createFilter = (queryString) => {
                             />
                         </el-form-item>
                     </el-col>
-                    <el-col :span="8">
+                    <el-col :xs="0" :sm="0" :md="0" :lg="8" :xl="8">
                         <!-- <el-form-item>
                             <template #label>
                                 <span class="text-black">Sku</span>
@@ -375,10 +375,10 @@ const createFilter = (queryString) => {
                                     @confirm="clearForm"
                                 >
                                     <template #reference>
-                                        <el-button type="danger" plain class="w-40"><X :size="20" /> Cancelar venta</el-button>
+                                        <el-button type="danger" plain class="w-40 mb-3"><X :size="20" /> Cancelar venta</el-button>
                                     </template>
                                 </el-popconfirm>
-                                <el-button type="success" plain class="w-40" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
+                                <el-button type="success" plain class="w-40 mb-3" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                             </el-col>
                         </el-row>
                     </el-col>

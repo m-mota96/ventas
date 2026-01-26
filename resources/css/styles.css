@@ -34,3 +34,9 @@
 .w-5 {
     width: 5% !important;
 }
+.pr {
+    position: relative;
+}
+.pa {
+    position: absolute;
+}

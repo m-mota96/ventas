@@ -19,7 +19,7 @@ class InventoryController extends Controller {
         ->orderBy('name')
         ->get();
 
-        $references = Reference::select('*', 'id AS value', 'name AS label')->get();
+        $references = Reference::select('*', 'id AS value', 'name AS label')->whereNotIn('id', [2])->get();
 
         return Inertia::render('user/Inventory', [
             'products'   => $products,
@@ -59,6 +59,8 @@ class InventoryController extends Controller {
         }
         if (isset($search['reference'])) {
             $data->whereIn('reference_id', $search['reference']);
+        } else {
+            $data->whereIn('reference_id', [1, 3]);
         }
         if (isset($search['date'])) {
             $search['date'][0] = $search['date'][0].' 00:00:00';
