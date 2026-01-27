@@ -314,7 +314,7 @@ const createFilter = (queryString) => {
                     </el-col>
                     <el-col :span="24" class="mt-3">
                         <el-row :gutter="30">
-                            <el-col :span="6">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="6">
                                 <p class="text-2xl mb-1 relative">
                                     <span class="text-balck">Subtotal: </span>
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.subtotal) }}</span>
@@ -340,7 +340,7 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.change) }}</span>
                                 </p>
                             </el-col>
-                            <el-col :span="4">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="4">
                                 <p class="text-black text-lg">Método de pago</p>
                                 <el-radio-group v-model="sale.paymentMethod" @change="payToDisabled">
                                     <div class="w-100" v-for="pm in paymentMethods" :key="pm.id">
@@ -348,7 +348,7 @@ const createFilter = (queryString) => {
                                     </div>
                                 </el-radio-group>
                             </el-col>
-                            <el-col :span="4">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="4">
                                 <div v-if="sale.paymentMethod === 3">
                                     <p class="text-black bold mt-2">¿Cuánto pagó en efectivo?</p>
                                     <el-input placeholder="Importe" v-model="sale.cash" @input="sale.card = sale.total - sale.cash" clearable />
@@ -358,7 +358,7 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-500 bold text-lg">{{ formatCurrency(sale.card) }}</span>
                                 </div>
                             </el-col>
-                            <el-col :span="10" class="text-right">
+                            <el-col :xs="24" :sm="24" :md="12" :lg="10" class="text-right">
                                 <el-button type="success" plain class="w-40 mb-3" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                                 <el-popconfirm
                                     class="box-item"

@@ -42,7 +42,7 @@ const chartOptions = ref({
         },
     },
     tooltip: {
-        formatter: function () {
+        formatter: function() {
             return `
             <span style="font-size:10px">${this.point.key}</span><br>
             <b>${this.point.y.toLocaleString('es-MX', {
@@ -62,13 +62,16 @@ const chartOptions = ref({
         series: {
             dataLabels: {
                 enabled: true,
-                formatter: function () {
+                formatter: function() {
                     return this.y ? formatCurrency(this.y) : '';
                 }
             }
         }
     },
     credits: {
+        enabled: false
+    },
+    accessibility: {
         enabled: false
     },
     series: []
@@ -96,7 +99,7 @@ const chartYear = ref({
         },
     },
     tooltip: {
-        formatter: function () {
+        formatter: function() {
             return `
             <span style="font-size:10px">${this.point.key}</span><br>
             <b>${this.point.y.toLocaleString('es-MX', {
@@ -116,7 +119,7 @@ const chartYear = ref({
         series: {
             dataLabels: {
                 enabled: true,
-                formatter: function () {
+                formatter: function() {
                     return this.y ? formatCurrency(this.y) : '';
                 }
             }
@@ -125,8 +128,95 @@ const chartYear = ref({
     credits: {
         enabled: false
     },
+    accessibility: {
+        enabled: false
+    },
     series: []
 });
+
+const chartPie = ref({
+    chart: {
+        type: 'pie',
+        zooming: {
+            type: 'xy'
+        },
+        panning: {
+            enabled: true,
+            type: 'xy'
+        },
+        panKey: 'shift'
+    },
+    title: {
+        text: ''
+    },
+    tooltip: {
+        formatter: function() {
+            const value = this.point.realValue ?? this.y;
+
+            const sign = value < 0 ? '-' : '';
+            
+            return `
+            <span style="font-size:10px">${this.point.key}</span><br>
+            <b>${sign}${this.point.y.toLocaleString('es-MX', {
+                style: 'currency',
+                currency: 'MXN'
+            })}</b>
+            `;
+        },
+        shared: true,
+        useHTML: true
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: [{
+                enabled: true,
+                distance: 20,
+                // formatter: function() {
+                //     return this.point.y ? formatCurrency(this.point.y) : '';
+                // }
+            }, {
+                enabled: true,
+                distance: -50,
+                formatter: function () {
+                    const value = this.point.realValue ?? this.y;
+
+                    const formatted = new Intl.NumberFormat('es-MX', {
+                        style: 'currency',
+                        currency: 'MXN'
+                    }).format(Math.abs(value));
+
+                    return value < 0 ? `-${formatted}` : formatted;
+                },
+                style: {
+                    fontSize: '1.2em',
+                    textOutline: 'none',
+                    opacity: 0.7
+                },
+                filter: {
+                    operator: '>',
+                    property: 'y',
+                    value: 10
+                }
+            }]
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    accessibility: {
+        enabled: false
+    },
+    series: [
+        {
+            name: 'Monto',
+            colorByPoint: true,
+            data: []
+        }
+    ]
+});
+
 const currentDate  = ref(
     new Date().toLocaleDateString('en-CA')
 );
@@ -160,34 +250,51 @@ onMounted(() => {
     getStatistics();
 });
 
-const getStatistics = async ()=> {
-    income.value   = 0;
-    expenses.value = 0;
-    profits.value  = 0;
+const getStatistics = async (type = 'all')=> {
+    if (type === 'month' || type === 'all') {
+        income.value               = 0;
+        expenses.value             = 0;
+        profits.value              = 0;
+        chartOptions.value.series  = [];
+    }
+    if (type === 'year' || type === 'all') {
+        chartYear.value.series        = [];
+        chartPie.value.series[0].data = [];
+    }
     const response = await apiClient('user/statistics', 'GET', {
         year: search.value.year,
         month: search.value.month,
         currentYear: search.value.currentYear
     });
-    chart(response.data.sales);
-    setChartYear(response.data.salesYear);
-    animateValue(income, response.data.totalSales, 2000);
-    animateValue(expenses, response.data.expenses, 2000);
-    animateValue(profits, (response.data.totalSales - response.data.expenses), 2000);
+    if (type === 'month' || type === 'all') {
+        chart(response.data.sales, response.data.arrayExpenses);
+        animateValue(income, response.data.totalSales, 2000);
+        animateValue(expenses, response.data.expenses, 2000);
+        animateValue(profits, (response.data.totalSales - response.data.expenses), 2000);
+    }
+    if (type === 'year' || type === 'all') {
+        setChartYear(response.data.salesYear);
+        setChartPie(response.data.salesForYear, response.data.expensesForYear);
+    }
     salesCash.value = response.data.salesCash;
     salesCard.value = response.data.salesCard;
 };
 
-const chart = (sales)=> {
+const chart = (sales, expenses)=> {
     const dates = getDaysInMonth(search.value.month, search.value.year);
 
     chartOptions.value.xAxis.categories = dates;
-    chartOptions.value.series = [];
     chartOptions.value.series.push({
         name: 'Ingresos',
         data: Object.values(sales),
         colorByPoint: false,
         color: '#00c951'
+    });
+    chartOptions.value.series.push({
+        name: 'Egresos',
+        data: Object.values(expenses),
+        colorByPoint: false,
+        color: '#ff6900'
     });
 }
 
@@ -207,6 +314,16 @@ const setChartYear = (sales)=> {
         color: '#00c951'
     });
 }
+
+const setChartPie = (sales, expenses)=> {
+    const balance = sales - expenses;
+    const color   = balance < 0 ? '#fb2c36' : '#2b7fff';
+    chartPie.value.series[0].data = [
+        { name: 'Ventas', y: sales, color: '#00c951' },
+        { name: 'Gastos', y: expenses, color: '#ff6900' },
+        { name: 'Balance', y: Math.abs(balance), realValue: balance, color, sliced: true, selected: true }
+    ];
+};
 
 const getDaysInMonth = (month, year)=> {
     const days = [];
@@ -282,12 +399,12 @@ const animateValue = (refValue, end, duration = 1000) => {
                         <!-- <span class="text-xl bold text-black"> -->
                             <el-form-item>
                                 <template #label>
-                                    <span class="text-xl bold text-black">Ventas mensuales</span>
+                                    <span class="text-xl bold text-black">Resumen mensual</span>
                                 </template>
-                                <el-select v-model="search.month" class="w-20" @change="getStatistics">
+                                <el-select v-model="search.month" class="w-20" @change="getStatistics('month')">
                                     <el-option v-for="m in months" :key="m.value" :value="m.value" :label="m.label" />
                                 </el-select>
-                                <el-select v-model="search.year" class="w-15 ml-3" @change="getStatistics">
+                                <el-select v-model="search.year" class="w-15 ml-3" @change="getStatistics('month')">
                                     <el-option v-for="y in years" :key="y" :value="y" :label="y" />
                                 </el-select>
                             </el-form-item>
@@ -311,17 +428,27 @@ const animateValue = (refValue, end, duration = 1000) => {
                         <el-col :span="24" class="mb-3">
                             <el-card class="my-card height-card text-center pr">
                                 <p class="text-black bold text-xl mb-4">Egresos</p>
-                                <p class="text-red-500 bold text-3xl mb-3">{{ formatCurrency(expenses) }}</p>
+                                <p class="text-orange-500 bold text-3xl mb-3">{{ formatCurrency(expenses) }}</p>
                                 <p class="text-black">{{ months[search.month - 1].label }} de {{ search.year }}</p>
-                                <ArrowBigDown class="inline-block pa text-red-500" :size="45" style="top: 60px; right: 25px;" />
+                                <ArrowBigDown class="inline-block pa text-orange-500" :size="45" style="top: 60px; right: 25px;" />
                             </el-card>
                         </el-col>
                         <el-col :span="24" class="mb-3">
                             <el-card class="my-card height-card text-center pr">
                                 <p class="text-black bold text-xl mb-4">Balance</p>
-                                <p class="text-blue-500 bold text-3xl mb-3">{{ formatCurrency(profits) }}</p>
+                                <p
+                                    :class="(profits < 0) ? 'text-red-500' : 'text-blue-500'"
+                                    class="bold text-3xl mb-3"
+                                >
+                                    {{ formatCurrency(profits) }}
+                                </p>
                                 <p class="text-black">{{ months[search.month - 1].label }} de {{ search.year }}</p>
-                                <DollarSignIcon class="inline-block pa text-blue-500" :size="35" style="top: 60px; right: 25px;" />
+                                <DollarSignIcon
+                                    :class="(profits < 0) ? 'text-red-500' : 'text-blue-500'"
+                                    class="inline-block pa"
+                                    :size="35"
+                                    style="top: 60px; right: 25px;"
+                                />
                             </el-card>
                         </el-col>
                     </el-row>
@@ -331,9 +458,9 @@ const animateValue = (refValue, end, duration = 1000) => {
                         <!-- <span class="text-xl bold text-black"> -->
                             <el-form-item>
                                 <template #label>
-                                    <span class="text-xl bold text-black">Ventas anuales</span>
+                                    <span class="text-xl bold text-black">Resumen anual</span>
                                 </template>
-                                <el-select v-model="search.currentYear" class="w-15 ml-3" @change="getStatistics">
+                                <el-select v-model="search.currentYear" class="w-15 ml-3" @change="getStatistics('year')">
                                     <el-option v-for="y in years" :key="y" :value="y" :label="y" />
                                 </el-select>
                             </el-form-item>
@@ -342,6 +469,11 @@ const animateValue = (refValue, end, duration = 1000) => {
                         <highcharts
                             :options="chartYear"
                         />
+                    </el-card>
+                </el-col>
+                <el-col :span="8" class="mt-5">
+                    <el-card class="my-card pt-9" style="height: 525px;">
+                        <highcharts :options="chartPie" />
                     </el-card>
                 </el-col>
             </el-row>
