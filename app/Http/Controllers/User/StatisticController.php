@@ -59,11 +59,25 @@ class StatisticController extends Controller {
         ->whereMonth('created_at', $request->month)
         ->first();
 
+        $salesCash = Sale::selectRaw('SUM(cash) AS sales')
+        ->where('store_id', auth()->user()->store_id)
+        ->whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
+        ->where('status_id', 1)
+        ->first();
+
+        $salesCard = Sale::selectRaw('SUM(card) AS sales')
+        ->where('store_id', auth()->user()->store_id)
+        ->whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
+        ->where('status_id', 1)
+        ->first();
+
         return ResponseTrait::response(null, [
             'sales'      => $arraySales,
             'totalSales' => $sales->sales,
             'expenses'   => $expenses->expenses,
-            'salesYear'  => $arraySalesYear
+            'salesYear'  => floatval($arraySalesYear),
+            'salesCash'  => floatval($salesCash->sales),
+            'salesCard'  => floatval($salesCard->sales),
         ]);
     }
 }

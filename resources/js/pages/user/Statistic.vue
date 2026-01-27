@@ -127,9 +127,9 @@ const chartYear = ref({
     },
     series: []
 });
-const currentDate  = ref(new Date().toISOString().slice(0, 10));
-const currentYear  = ref(new Date().getFullYear());
-const currentMonth = ref(new Date().getMonth() + 1);
+const currentDate  = ref(
+    new Date().toLocaleDateString('en-CA')
+);
 const years        = ref([new Date().getFullYear() - 1, new Date().getFullYear()]);
 const months       = ref([
     { value: 1, label: 'Enero' },
@@ -145,14 +145,16 @@ const months       = ref([
     { value: 11, label: 'Noviembre' },
     { value: 12, label: 'Diciembre' },
 ]);
-const search       = ref({
+const search = ref({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     currentYear: new Date().getFullYear()
 });
-const income        = ref(0);
-const expenses      = ref(0);
-const profits       = ref(0);
+const income    = ref(0);
+const expenses  = ref(0);
+const profits   = ref(0);
+const salesCard = ref(0);
+const salesCash = ref(0);
 
 onMounted(() => {
     getStatistics();
@@ -172,10 +174,12 @@ const getStatistics = async ()=> {
     animateValue(income, response.data.totalSales, 2000);
     animateValue(expenses, response.data.expenses, 2000);
     animateValue(profits, (response.data.totalSales - response.data.expenses), 2000);
+    salesCash.value = response.data.salesCash;
+    salesCard.value = response.data.salesCard;
 };
 
 const chart = (sales)=> {
-    const dates = getDaysInMonth(currentMonth.value, currentYear.value);
+    const dates = getDaysInMonth(search.value.month, search.value.year);
 
     chartOptions.value.xAxis.categories = dates;
     chartOptions.value.series = [];
@@ -260,15 +264,15 @@ const animateValue = (refValue, end, duration = 1000) => {
                             </el-col>
                             <el-col :span="8" class="text-center">
                                 <p class="text-black mb-3">Ventas en efectivo</p>
-                                <p class="text-gray-700 text-3xl bold">$502.50</p>
+                                <p class="text-gray-700 text-3xl bold">{{ formatCurrency(salesCash) }}</p>
                             </el-col>
                             <el-col :span="8" class="text-center">
                                 <p class="text-balck mb-3">Ventas con tarjeta</p>
-                                <p class="text-gray-700 text-3xl bold">$0.00</p>
+                                <p class="text-gray-700 text-3xl bold">{{ formatCurrency(salesCard) }}</p>
                             </el-col>
                             <el-col :span="8" class="text-center">
                                 <p class="text-balck mb-3">Total vendido</p>
-                                <p class="text-gray-700 text-3xl bold">$0.00</p>
+                                <p class="text-gray-700 text-3xl bold">{{ formatCurrency((salesCash + salesCard)) }}</p>
                             </el-col>
                         </el-row>
                     </el-card>
@@ -283,7 +287,7 @@ const animateValue = (refValue, end, duration = 1000) => {
                                 <el-select v-model="search.month" class="w-20" @change="getStatistics">
                                     <el-option v-for="m in months" :key="m.value" :value="m.value" :label="m.label" />
                                 </el-select>
-                                <el-select v-model="search.year" class="w-10 ml-3" @change="getStatistics">
+                                <el-select v-model="search.year" class="w-15 ml-3" @change="getStatistics">
                                     <el-option v-for="y in years" :key="y" :value="y" :label="y" />
                                 </el-select>
                             </el-form-item>
@@ -329,7 +333,7 @@ const animateValue = (refValue, end, duration = 1000) => {
                                 <template #label>
                                     <span class="text-xl bold text-black">Ventas anuales</span>
                                 </template>
-                                <el-select v-model="search.currentYear" class="w-10 ml-3" @change="getStatistics">
+                                <el-select v-model="search.currentYear" class="w-15 ml-3" @change="getStatistics">
                                     <el-option v-for="y in years" :key="y" :value="y" :label="y" />
                                 </el-select>
                             </el-form-item>

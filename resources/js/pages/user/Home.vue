@@ -234,7 +234,7 @@ const createFilter = (queryString) => {
                             empty-text="No hay productos seleccionados para venta"
                             header-cell-class-name="text-black bold text-base !bg-blue-100"
                             row-class-name="text-black text-base"
-                            style="border: 1px solid grey; height: 53vh !important; border-radius: 5px; width: 100%;"
+                            style="border: 1px solid grey; height: 46vh !important; border-radius: 5px; width: 100%;"
                         >
                             <el-table-column label="" width="100" align="center">
                                 <template #default="scope">
@@ -314,7 +314,7 @@ const createFilter = (queryString) => {
                     </el-col>
                     <el-col :span="24" class="mt-3">
                         <el-row :gutter="30">
-                            <el-col :span="5">
+                            <el-col :span="6">
                                 <p class="text-2xl mb-1 relative">
                                     <span class="text-balck">Subtotal: </span>
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.subtotal) }}</span>
@@ -340,7 +340,7 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-600 absolute" style="right: 0;">{{ formatCurrency(sale.change) }}</span>
                                 </p>
                             </el-col>
-                            <el-col :span="3">
+                            <el-col :span="4">
                                 <p class="text-black text-lg">Método de pago</p>
                                 <el-radio-group v-model="sale.paymentMethod" @change="payToDisabled">
                                     <div class="w-100" v-for="pm in paymentMethods" :key="pm.id">
@@ -358,10 +358,8 @@ const createFilter = (queryString) => {
                                     <span class="text-blue-500 bold text-lg">{{ formatCurrency(sale.card) }}</span>
                                 </div>
                             </el-col>
-                            <el-col :span="6">
-
-                            </el-col>
-                            <el-col :span="6" class="text-right">
+                            <el-col :span="10" class="text-right">
+                                <el-button type="success" plain class="w-40 mb-3" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                                 <el-popconfirm
                                     class="box-item"
                                     confirm-button-text="Si"
@@ -378,7 +376,6 @@ const createFilter = (queryString) => {
                                         <el-button type="danger" plain class="w-40 mb-3"><X :size="20" /> Cancelar venta</el-button>
                                     </template>
                                 </el-popconfirm>
-                                <el-button type="success" plain class="w-40 mb-3" @click="registerSale"><Check :size="20" /> Registrar venta</el-button>
                             </el-col>
                         </el-row>
                     </el-col>
@@ -390,7 +387,7 @@ const createFilter = (queryString) => {
 
 <style scoped>
     .my-card {
-        min-height: 86vh;
+        min-height: 83vh;
     }
     .mw-20 {
         min-width: 20% !important;
