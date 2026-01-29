@@ -39,7 +39,7 @@ class UserController extends Controller {
             $user = User::where('email', $request->email)->first();
             if ($user) {
                 return ResponseTrait::response(
-                    'El correo electrónico ingresado ya esta registrado, intenta con otro.',
+                    'El usuario ingresado ya esta registrado, intenta con otro.',
                     null,
                     true,
                     409
@@ -48,7 +48,7 @@ class UserController extends Controller {
             $user = User::create([
                 'store_id' => $request->store_id,
                 'name'     => $request->name,
-                'email'    => $request->email,
+                'email'    => strtolower($request->email),
                 'password' => Hash::make($request->password),
             ]);
             $user->assignRole('user');

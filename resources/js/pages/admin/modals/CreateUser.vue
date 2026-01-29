@@ -92,12 +92,12 @@ const validate = ()=> {
         errors.value.email = true;
         valid             = false;
     }
-    if (user.value.email) {
-        if (!mailRegex.test(user.value.email)) {
-            errors.value.email_invalid = true;
-            valid                      = false;
-        }
-    }
+    // if (user.value.email) {
+    //     if (!mailRegex.test(user.value.email)) {
+    //         errors.value.email_invalid = true;
+    //         valid                      = false;
+    //     }
+    // }
     if (!user.value.password && passwordReq.value) {
         errors.value.password = true;
         valid             = false;
@@ -123,6 +123,10 @@ const resetErrors = ()=> {
     errors.value.password         = false;
     errors.value.password_confirm = false;
     errors.value.passwords        = false;
+};
+
+const convertLower = (value) => {
+    user.value.email = value.toLowerCase();
 };
 
 defineExpose({
@@ -152,7 +156,7 @@ defineExpose({
             </el-select>
         </el-form-item>
         <p class="mb-3 text-red-400 text-sm" v-if="errors.store">Selecciona un elemento de la lista.</p>
-        <p class="text-black mt-3">Nombre <span class="text-red-500">*</span></p>
+        <p class="text-black mt-3">Nombre y apellidos <span class="text-red-500">*</span></p>
         <el-form-item
             :error="errors.name ? ' ' : ''"
             class="!mb-0"
@@ -164,8 +168,8 @@ defineExpose({
                 clearable
             />
         </el-form-item>
-        <p class="mb-3 text-red-400 text-sm" v-if="errors.name">El nombre del usuario es obligatorio.</p>
-        <p class="text-black mt-3">Correo electrónico <span class="text-red-500">*</span></p>
+        <p class="mb-3 text-red-400 text-sm" v-if="errors.name">El nombre es obligatorio.</p>
+        <p class="text-black mt-3">Usuario <span class="text-red-500">*</span></p>
         <el-form-item
             :error="errors.email || errors.email_invalid ? ' ' : ''"
             class="!mb-0"
@@ -176,9 +180,10 @@ defineExpose({
                 autocomplete="email"
                 clearable
                 :disabled="disabledInputs"
+                @input="(val) => convertLower(val)"
             />
         </el-form-item>
-        <p class="mb-3 text-red-400 text-sm" v-if="errors.email">El correo es obligatorio.</p>
+        <p class="mb-3 text-red-400 text-sm" v-if="errors.email">El usuario es obligatorio.</p>
         <p class="mb-3 text-red-400 text-sm" v-if="errors.email_invalid">Ingresa un correo válido.</p>
         <p class="text-black mt-3">Contraseña <span class="text-red-500" v-if="passwordReq">*</span></p>
         <el-form-item

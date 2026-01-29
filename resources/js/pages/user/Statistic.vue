@@ -15,10 +15,17 @@ const user = computed(() => page.props.auth.user);
 
 const breadcrumbs = [
     {
-        title: `Estadísticas - Sucursal ${user.value.store.name}`,
+        title: user.value.store ? `Estadísticas - Sucursal ${user.value.store.name}` : 'Inicio',
         href: dashboard().url,
     },
 ];
+
+const { stores } = defineProps({
+    stores: {
+        type: Array,
+        required: false
+    }
+});
 
 const chartOptions = ref({
     chart: {
@@ -217,6 +224,7 @@ const chartPie = ref({
     ]
 });
 
+const title        = ref('Estadísticas');
 const currentDate  = ref(
     new Date().toLocaleDateString('en-CA')
 );
@@ -238,7 +246,8 @@ const months       = ref([
 const search = ref({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
-    currentYear: new Date().getFullYear()
+    currentYear: new Date().getFullYear(),
+    store_id: null
 });
 const income    = ref(0);
 const expenses  = ref(0);
@@ -247,10 +256,20 @@ const salesCard = ref(0);
 const salesCash = ref(0);
 
 onMounted(() => {
+    if (stores) {
+        title.value = 'Inicio';
+        if (stores.length === 1) {
+            search.value.store_id = stores[0].id;
+        }
+    }
     getStatistics();
 });
 
 const getStatistics = async (type = 'all')=> {
+    if (type !== 'all' && !user.value.store && !search.value.store_id) {
+        showNotification('Por favor elige una sucursal.', 'warning');
+        return
+    }
     if (type === 'month' || type === 'all') {
         income.value               = 0;
         expenses.value             = 0;
@@ -264,7 +283,8 @@ const getStatistics = async (type = 'all')=> {
     const response = await apiClient('user/statistics', 'GET', {
         year: search.value.year,
         month: search.value.month,
-        currentYear: search.value.currentYear
+        currentYear: search.value.currentYear,
+        store_id: search.value.store_id
     });
     if (type === 'month' || type === 'all') {
         chart(response.data.sales, response.data.arrayExpenses);
@@ -366,36 +386,52 @@ const animateValue = (refValue, end, duration = 1000) => {
 </script>
 
 <template>
-    <Head title="Estadísticas" />
+    <Head :title="title" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div
             class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
         >
             <el-row :gutter="20">
+                <el-col v-if="!user.store" :xs="24" :sm="24" :md="12" :lg="6" :xl="6" class="mb-0">
+                    <el-form-item>
+                        <template #label>
+                            <span class="text-black">Sucursal </span>
+                        </template>
+                        <el-select
+                            class="my-select"
+                            v-model="search.store_id"
+                            @change="getStatistics()"
+                            placeholder="Elige una sucursal"
+                            clearable
+                        >
+                            <el-option v-for="s in stores" :key="s.id" :value="s.id" :label="s.name" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
                 <el-col :span="24" class="mb-5">
                     <el-card class="my-card">
                         <el-row>
                             <el-col :span="24" class="text-center mb-5">
                                 <p class="text-black bold text-2xl">{{ dateEs(currentDate, ' de ', 0, true) }}</p>
                             </el-col>
-                            <el-col :span="8" class="text-center">
+                            <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="text-center">
                                 <p class="text-black mb-3">Ventas en efectivo</p>
                                 <p class="text-gray-700 text-3xl bold">{{ formatCurrency(salesCash) }}</p>
                             </el-col>
-                            <el-col :span="8" class="text-center">
+                            <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="text-center">
                                 <p class="text-balck mb-3">Ventas con tarjeta</p>
                                 <p class="text-gray-700 text-3xl bold">{{ formatCurrency(salesCard) }}</p>
                             </el-col>
-                            <el-col :span="8" class="text-center">
+                            <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8" class="text-center">
                                 <p class="text-balck mb-3">Total vendido</p>
                                 <p class="text-gray-700 text-3xl bold">{{ formatCurrency((salesCash + salesCard)) }}</p>
                             </el-col>
                         </el-row>
                     </el-card>
                 </el-col>
-                <el-col :span="18">
-                    <el-card class="my-card">
+                <el-col :xs="24" :sm="24" :md="24" :lg="18" :xl="18">
+                    <el-card class="my-card mb-3">
                         <!-- <span class="text-xl bold text-black"> -->
                             <el-form-item>
                                 <template #label>
@@ -415,7 +451,7 @@ const animateValue = (refValue, end, duration = 1000) => {
                         />
                     </el-card>
                 </el-col>
-                <el-col :span="6">
+                <el-col :xs="24" :sm="24" :md="24" :lg="6" :xl="6">
                     <el-row>
                         <el-col :span="24" class="mb-3">
                             <el-card class="my-card height-card text-center pr">
@@ -453,8 +489,8 @@ const animateValue = (refValue, end, duration = 1000) => {
                         </el-col>
                     </el-row>
                 </el-col>
-                <el-col :span="16" class="mt-5">
-                    <el-card class="my-card">
+                <el-col :xs="24" :sm="24" :md="24" :lg="16" :xl="16" class="mt-5">
+                    <el-card class="my-card mb-3">
                         <!-- <span class="text-xl bold text-black"> -->
                             <el-form-item>
                                 <template #label>
@@ -471,7 +507,7 @@ const animateValue = (refValue, end, duration = 1000) => {
                         />
                     </el-card>
                 </el-col>
-                <el-col :span="8" class="mt-5">
+                <el-col :xs="24" :sm="24" :md="24" :lg="8" :xl="8" class="mt-5">
                     <el-card class="my-card pt-9" style="height: 525px;">
                         <highcharts :options="chartPie" />
                     </el-card>
@@ -492,5 +528,11 @@ const animateValue = (refValue, end, duration = 1000) => {
 
 .height-card {
     height: 168px;
+}
+
+.my-select {
+    --el-border-color: var(--el-color-primary);
+    --el-border-color-hover: var(--el-color-primary);
+    --el-select-input-focus-border-color: var(--el-color-primary);
 }
 </style>

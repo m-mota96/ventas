@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\PaymentMethod;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Store;
 
 class HomeController extends Controller {
     public function index() {
@@ -21,7 +22,10 @@ class HomeController extends Controller {
     }
 
     public function stores() {
-        return Inertia::render('admin/Home');
+        $stores = Store::select('id', 'user_id', 'name')->where('user_id', auth()->user()->id)->orderBy('name')->get();
+        return Inertia::render('user/Statistic', [
+            'stores' => $stores
+        ]);
     }
 
     public function users() {

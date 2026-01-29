@@ -12,6 +12,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use App\Models\User;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -28,6 +31,37 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Fortify::authenticateUsing(function (Request $request) {
+            $request->validate([
+                'user' => ['required', 'string'],
+                'password' => ['required'],
+            ]);
+
+            $user = User::where('email', $request->user)->first();
+
+            if (! $user) {
+                throw ValidationException::withMessages([
+                    'email' => 'El usuario no esta registrado.',
+                ]);
+            }
+
+            if (!$user->status) {
+                throw ValidationException::withMessages([
+                    'email' => 'El usuario ha sido desactivado.',
+                ]);
+            }
+
+            if (! Auth::attempt([
+                'email' => $request->user,
+                'password' => $request->password,
+            ])) {
+                throw ValidationException::withMessages([
+                    'password' => 'La contraseña es incorrecta.',
+                ]);
+            }
+
+            return $user;
+        });
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
@@ -83,9 +117,10 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            // $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $user = (string) $request->user;
 
-            return Limit::perMinute(5)->by($throttleKey);
+            return Limit::perMinute(5)->by($user.$request->ip());
         });
     }
 }

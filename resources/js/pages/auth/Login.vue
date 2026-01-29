@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { register } from '@/routes';
+// import { register } from '@/routes';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
+// import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/vue3';
 
 defineProps<{
@@ -21,10 +21,10 @@ defineProps<{
 
 <template>
     <AuthBase
-        title="Log in to your account"
-        description="Enter your email and password below to log in"
+        title="Iniciar sesión en tu cuenta"
+        description="Ingresa tu usuario y contraseña a continuación para iniciar sesión"
     >
-        <Head title="Log in" />
+        <Head title="Iniciar sesión" />
 
         <div
             v-if="status"
@@ -41,23 +41,22 @@ defineProps<{
         >
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Usuario</Label>
                     <Input
-                        id="email"
-                        type="email"
-                        name="email"
+                        id="user"
+                        name="user"
                         required
                         autofocus
                         :tabindex="1"
-                        autocomplete="email"
-                        placeholder="email@example.com"
+                        autocomplete="user"
+                        placeholder="administrador"
                     />
                     <InputError :message="errors.email" />
                 </div>
 
                 <div class="grid gap-2">
-                    <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
+                    <Label for="password">Contraseña</Label>
+                    <!-- <div class="flex items-center justify-between">
                         <TextLink
                             v-if="canResetPassword"
                             :href="request()"
@@ -66,7 +65,7 @@ defineProps<{
                         >
                             Forgot password?
                         </TextLink>
-                    </div>
+                    </div> -->
                     <Input
                         id="password"
                         type="password"
@@ -74,17 +73,17 @@ defineProps<{
                         required
                         :tabindex="2"
                         autocomplete="current-password"
-                        placeholder="Password"
+                        placeholder="Escribe tu contraseña"
                     />
                     <InputError :message="errors.password" />
                 </div>
 
-                <div class="flex items-center justify-between">
+                <!-- <div class="flex items-center justify-between">
                     <Label for="remember" class="flex items-center space-x-3">
                         <Checkbox id="remember" name="remember" :tabindex="3" />
                         <span>Remember me</span>
                     </Label>
-                </div>
+                </div> -->
 
                 <Button
                     type="submit"
@@ -94,17 +93,17 @@ defineProps<{
                     data-test="login-button"
                 >
                     <Spinner v-if="processing" />
-                    Log in
+                    Iniciar sesión
                 </Button>
             </div>
 
-            <div
+            <!-- <div
                 class="text-center text-sm text-muted-foreground"
                 v-if="canRegister"
             >
                 Don't have an account?
                 <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
-            </div>
+            </div> -->
         </Form>
     </AuthBase>
 </template>

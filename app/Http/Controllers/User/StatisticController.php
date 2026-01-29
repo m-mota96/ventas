@@ -25,16 +25,17 @@ class StatisticController extends Controller {
         $arraySalesYear    = [];
         $arrayExpenses     = [];
         $arrayExpensesYear = [];
+        $storeId           = auth()->user()->store_id ?? $request->store_id;
 
         for($date = $start_date; $date->lte($end_date); $date->addDay()) {
             $sales = Sale::selectRaw('IF(SUM(total) IS NOT NULL, SUM(total), 0) AS total')
-            ->where('store_id', auth()->user()->store_id)
+            ->where('store_id', $storeId)
             ->whereDate('created_at', '=', $date->format('Y-m-d'))
             ->where('status_id', 1)
             ->first();
             $arraySales[$date->format('Y-m-d')] = floatval($sales->total);
             $expenses = Inventory::selectRaw('IF(SUM(price) IS NOT NULL, SUM(price), 0) AS total')
-            ->where('store_id', auth()->user()->store_id)
+            ->where('store_id', $storeId)
             ->where('type', 'input') // Ingreso
             ->where('reference_id', 1) // Abastecimiento de producto
             ->whereDate('created_at', '=', $date->format('Y-m-d'))
@@ -44,7 +45,7 @@ class StatisticController extends Controller {
 
         for ($i = 1; $i < 13; $i++) { 
             $sales = Sale::selectRaw('IF(SUM(total) IS NOT NULL, SUM(total), 0) AS total')
-            ->where('store_id', auth()->user()->store_id)
+            ->where('store_id', $storeId)
             ->whereYear('created_at', $request->currentYear)
             ->whereMonth('created_at', $i)
             ->where('status_id', 1)
@@ -54,14 +55,14 @@ class StatisticController extends Controller {
         }
 
         $sales = Sale::selectRaw('IF(SUM(total) IS NOT NULL, SUM(total), 0) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->whereYear('created_at', $request->year)
         ->whereMonth('created_at', $request->month)
         ->where('status_id', 1)
         ->first();
 
         $expenses = Inventory::selectRaw('IF(SUM(price) IS NOT NULL, SUM(price), 0) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->where('type', 'input') // Ingreso
         ->where('reference_id', 1) // Abastecimiento de producto
         ->whereYear('created_at', $request->year)
@@ -69,25 +70,25 @@ class StatisticController extends Controller {
         ->first();
 
         $salesCash = Sale::selectRaw('SUM(cash) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
         ->where('status_id', 1)
         ->first();
 
         $salesCard = Sale::selectRaw('SUM(card) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->whereBetween('created_at', [date('Y-m-d 00:00:00'), date('Y-m-d 23:59:59')])
         ->where('status_id', 1)
         ->first();
 
         $salesForYear = Sale::selectRaw('IF(SUM(total) IS NOT NULL, SUM(total), 0) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->whereYear('created_at', $request->currentYear)
         ->where('status_id', 1)
         ->first();
 
         $expensesForYear = Inventory::selectRaw('IF(SUM(price) IS NOT NULL, SUM(price), 0) AS total')
-        ->where('store_id', auth()->user()->store_id)
+        ->where('store_id', $storeId)
         ->where('type', 'input') // Ingreso
         ->where('reference_id', 1) // Abastecimiento de producto
         ->whereYear('created_at', $request->currentYear)
