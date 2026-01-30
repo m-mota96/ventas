@@ -3,9 +3,8 @@ import apiClient from '@/apiClient';
 import showNotification from '@/notification';
 import { ref, defineExpose } from 'vue';
 
-const { getParentProducts, allProducts } = defineProps({
-    getParentProducts: Function,
-    allProducts: Array
+const { getParentProducts } = defineProps({
+    getParentProducts: Function
 });
 
 const dialogVisible = ref(false);
@@ -129,13 +128,14 @@ const handleSelect = (_product)=> {
     product.value.description = _product.description;
 };
 
-const querySearch = (queryString, cb) => {
+const querySearch = async (queryString, cb) => {
     if (queryString.length < 3) {
         cb([]);
         return;
     }
 
-    const results = allProducts
+    const response = await apiClient('user/product', 'GET', { name: queryString, type: 'newProduct' });
+    const results  = response.data
     .filter(createFilter(queryString))
     .map(product => ({
         ...product,

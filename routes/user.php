@@ -19,6 +19,7 @@ Route::prefix('user')->middleware('auth')->group(function () {
     Route::get('products', [ProductController::class, 'products']);
     Route::post('product', [ProductController::class, 'saveProduct']);
     Route::put('product', [ProductController::class, 'editProduct']);
+    Route::get('product', [ProductController::class, 'product']);
     Route::delete('product/{id}', [ProductController::class, 'deleteProduct']);
     Route::get('inventories', [InventoryController::class, 'inventories']);
     Route::post('inventory', [InventoryController::class, 'saveInventory']);

@@ -18,11 +18,7 @@ const breadcrumbs = [
     },
 ];
 
-const { listProducts, paymentMethods } = defineProps({
-    listProducts: {
-        type: Array,
-        required: true
-    },
+const { paymentMethods } = defineProps({
     paymentMethods: {
         type: Array,
         required: true
@@ -161,13 +157,14 @@ const formatCurrency = (value)=> {
     }).format(value);
 };
 
-const querySearch = (queryString, cb) => {
+const querySearch = async (queryString, cb) => {
     if (queryString.length < 3) {
         cb([]);
         return;
     }
 
-    const results = listProducts
+    const response = await apiClient('user/product', 'GET', { name: queryString, type: 'sale' });
+    const results  = response.data
     .filter(createFilter(queryString))
     .filter(product => !products.value.some(p => p.id === product.id))
     .map(product => ({

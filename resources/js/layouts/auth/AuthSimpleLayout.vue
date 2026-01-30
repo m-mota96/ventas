@@ -23,10 +23,10 @@ defineProps<{
                         <div
                             class="mb-1 flex  items-center justify-center rounded-md"
                         >
-                            <AppLogoIcon
+                            <!-- <AppLogoIcon
                                 class="size-2 fill-current text-[var(--foreground)] dark:text-white"
-                            />
-                            <!-- <el-image src="../../../../jaguar.png" class="w-100" /> -->
+                            /> -->
+                            <el-image src="../../../../jaguar.png" class="w-75" />
                         </div>
                         <span class="sr-only">{{ title }}</span>
                     </Link>

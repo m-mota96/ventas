@@ -17,13 +17,6 @@ const breadcrumbs = [
     },
 ];
 
-const { allProducts } = defineProps({
-    allProducts: {
-        type: Array,
-        required: true
-    },
-});
-
 const createEditProductRef = ref(null);
 const products   = ref([]);
 const pagination = ref({
@@ -205,7 +198,7 @@ const handleCurrentChange = (val) => {
                     @current-change="handleCurrentChange"
                 />
             </el-card>
-            <CreateEditProduct ref="createEditProductRef" :get-parent-products="getProducts" :all-products="allProducts"/>
+            <CreateEditProduct ref="createEditProductRef" :get-parent-products="getProducts"/>
         </div>
     </AppLayout>
 </template>

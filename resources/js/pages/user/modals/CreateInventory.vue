@@ -3,9 +3,8 @@ import apiClient from '@/apiClient';
 import showNotification from '@/notification';
 import { ref, defineExpose, computed } from 'vue';
 
-const { getParentInventory, products, references } = defineProps({
+const { getParentInventory, references } = defineProps({
     getParentInventory: Function,
-    products: Array,
     references: Array,
 });
 
@@ -112,13 +111,14 @@ const handleSelect = (_product)=> {
     inventory.value.type_sale  = _product.type_sale;
 };
 
-const querySearch = (queryString, cb) => {
+const querySearch = async (queryString, cb) => {
     if (queryString.length < 3) {
         cb([]);
         return;
     }
 
-    const results = products
+    const response = await apiClient('user/product', 'GET', { name: queryString, type: 'sale' });
+    const results  = response.data
     .filter(createFilter(queryString))
     .map(product => ({
         ...product,

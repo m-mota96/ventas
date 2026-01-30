@@ -12,17 +12,8 @@ use App\Models\Reference;
 
 class InventoryController extends Controller {
     public function index() {
-        $products = Product::select('id','name', 'bar_code', 'content', 'abreviation', 'type_sale')
-        ->whereHas('productStore', function($q) {
-            $q->where('status', 1)->where('store_id', auth()->user()->store_id);
-        })
-        ->orderBy('name')
-        ->get();
-
         $references = Reference::select('*', 'id AS value', 'name AS label')->whereNotIn('id', [2])->get();
-
         return Inertia::render('user/Inventory', [
-            'products'   => $products,
             'references' => $references
         ]);
     }

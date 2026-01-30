@@ -19,11 +19,7 @@ const breadcrumbs = [
     },
 ];
 
-const { products, references } = defineProps({
-    products: {
-        type: Array,
-        required: true
-    },
+const { references } = defineProps({
     references: {
         type: Array,
         required: true
@@ -394,7 +390,7 @@ watch(
                     @current-change="handleCurrentChange"
                 />
             </el-card>
-            <CreateInventory ref="createInventoryRef" :get-parent-inventory="getInventory" :products="products" :references="references"/>
+            <CreateInventory ref="createInventoryRef" :get-parent-inventory="getInventory" :references="references"/>
         </div>
     </AppLayout>
 </template>

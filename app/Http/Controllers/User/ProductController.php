@@ -12,14 +12,7 @@ use App\Models\ProductStore;
 
 class ProductController extends Controller {
     public function index() {
-        $allProducts = Product::with(['productStore:id,product_id,price'])
-        ->whereHas('productStore', function($q) {
-            $q->whereNotIn('store_id', [auth()->user()->store_id]);
-        })
-        ->orderBy('name', 'ASC')->get();
-        return Inertia::render('user/Products', [
-            'allProducts' => $allProducts
-        ]);
+        return Inertia::render('user/Products');
     }
 
     public function products(Request $request) {
@@ -165,5 +158,29 @@ class ProductController extends Controller {
                 500
             );
         }
+    }
+
+    public function product(Request $request) {
+        $query = Product::with(['productStore:id,product_id,store_id,price,discounted_price,special_price,status'])
+        ->select(
+            'id',
+            'name',
+            'content',
+            'abreviation',
+            'type_sale',
+            'description'
+        );
+        if ($request->type === 'sale') { // Si esta vendiendo productos buscamos los que tiene registrados en esa sucursal
+            $query->whereHas('productStore', function($q) {
+                $q->where('status', 1)->where('store_id', auth()->user()->store_id);
+            });
+        } else { // Si va a registrar un producto, buscamos en los que tienen otras sucursales para obtener la información
+            $query->whereHas('productStore', function($q) {
+                $q->whereNotIn('store_id', [auth()->user()->store_id]);
+            });
+        }
+        $query->whereLike('name', '%'.$request->name.'%');
+        $products = $query->orderBy('name', 'ASC')->get();
+        return ResponseTrait::response(null, $products);
     }
 }
