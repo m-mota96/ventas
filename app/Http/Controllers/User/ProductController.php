@@ -165,6 +165,7 @@ class ProductController extends Controller {
         ->select(
             'id',
             'name',
+            'bar_code',
             'content',
             'abreviation',
             'type_sale',
@@ -179,7 +180,12 @@ class ProductController extends Controller {
                 $q->whereNotIn('store_id', [auth()->user()->store_id]);
             });
         }
-        $query->whereLike('name', '%'.$request->name.'%');
+        if ($request->name) {
+            $query->whereLike('name', '%'.$request->name.'%');
+        }
+        if ($request->bar_code) {
+            $query->where('bar_code', $request->bar_code);
+        }
         $products = $query->orderBy('name', 'ASC')->get();
         return ResponseTrait::response(null, $products);
     }
