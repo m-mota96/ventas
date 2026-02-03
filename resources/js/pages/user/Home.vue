@@ -45,9 +45,11 @@ const sale = ref({
 
 const products     = ref([]);
 const disablePayTo = ref(false);
+const inputBarCode = ref(null);
 
 onMounted(() => {
     checkPaymentMethod();
+    inputBarCode.value.focus();
 });
 
 const registerSale = async ()=> {
@@ -62,6 +64,7 @@ const registerSale = async ()=> {
     }
     clearForm();
     showNotification(response.msj);
+    inputBarCode.value.focus();
 }
 
 const calculateTotal = ()=> {
@@ -83,6 +86,7 @@ const handleSelect = (_product)=> {
         id: _product.id,
         quantity: 1,
         name: _product.name,
+        bar_code: _product.bar_code,
         content: _product.content,
         abreviation: _product.abreviation,
         type_sale: _product.type_sale,
@@ -96,6 +100,7 @@ const handleSelect = (_product)=> {
     search.value.bar_code = '';
     search.value.name     = '';
     search.value.sku      = '';
+    inputBarCode.value.focus();
 };
 
 const calculateChange = (_value)=> {
@@ -134,11 +139,13 @@ const clearForm = ()=> {
     sale.value.cash          = '';
     sale.value.card          = '';
     checkPaymentMethod();
+    inputBarCode.value.focus();
 };
 
 const removeProduct = (id) => {
     products.value = products.value.filter(p => p.id !== id);
     calculateTotal();
+    inputBarCode.value.focus();
 };
 
 const checkPaymentMethod = ()=> {
@@ -149,6 +156,26 @@ const checkPaymentMethod = ()=> {
     });
     payToDisabled(sale.value.paymentMethod);
 };
+
+const barCode = async ()=> {
+    const index = products.value.findIndex(
+        p => p.bar_code === search.value.bar_code
+    );
+    if (index !== -1) {
+        products.value[index].quantity += 1;
+        search.value.name     = '';
+        search.value.bar_code = '';
+        calculateTotal();
+    } else {
+        const response = await apiClient('user/product', 'GET', { type: 'sale', bar_code: search.value.bar_code });
+        if (!response.data.length) {
+            showNotification('Producto no encontrado', 'warning');
+            search.value.bar_code = '';
+            return
+        }
+        handleSelect(response.data[0])
+    }
+}
 
 const formatCurrency = (value)=> {
     return new Intl.NumberFormat('es-MX', {
@@ -198,7 +225,14 @@ const createFilter = (queryString) => {
                             <template #label>
                                 <span class="text-black">Código de barras/Clave</span>
                             </template>
-                            <el-input v-model="search.bar_code" clearable placeholder="Escanea el código para agregar productos" />
+                            <el-input
+                                v-model="search.bar_code"
+                                ref="inputBarCode"
+                                clearable
+                                placeholder="Escanea el código para agregar productos"
+                                :autofocus="true"
+                                @keyup.enter="barCode"
+                            />
                         </el-form-item>
                     </el-col>
                     <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">

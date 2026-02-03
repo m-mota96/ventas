@@ -1,12 +1,13 @@
 <script setup lang="js">
 import apiClient from '@/apiClient';
 import showNotification from '@/notification';
-import { ref, defineExpose } from 'vue';
+import { ref, defineExpose  } from 'vue';
 
 const { getParentProducts } = defineProps({
     getParentProducts: Function
 });
 
+const inputBarCode  = ref(null);
 const dialogVisible = ref(false);
 const title         = ref('');
 const txtBtn        = ref('');
@@ -116,6 +117,10 @@ const resetErrors = ()=> {
     errors.value.type_sale = false;
 }
 
+const focusBarCode = () => {
+    inputBarCode.value.focus()
+}
+
 const handleSelect = (_product)=> {
     // console.log(_product);
     product.value.id          = _product.id;
@@ -164,6 +169,7 @@ defineExpose({
         :title="title"
         width="800"
         style="margin-top: 5vh;"
+        @opened="focusBarCode"
     >
         <el-row :gutter="20">
             <el-col :span="12" class="pt-3">
@@ -172,7 +178,12 @@ defineExpose({
                     :error="errors.bar_code ? ' ' : ''"
                     class="!mb-0"
                 >
-                    <el-input v-model="product.bar_code" clearable placeholder="Escanea el código de barras para buscar" />
+                    <el-input
+                        v-model="product.bar_code"
+                        ref="inputBarCode"
+                        clearable
+                        placeholder="Escanea el código de barras para buscar"
+                    />
                 </el-form-item>
                 <p class="text-red-400 text-sm" v-if="errors.bar_code">El código de barras es obligatorio.</p>
             </el-col>
